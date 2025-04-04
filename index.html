@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Parle à Grok</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 20px; background-color: #f0f0f0; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 5px; background-color: #1DA1F2; color: white; border: none; border-radius: 5px; }
+        button:disabled { background-color: #cccccc; }
+        select { padding: 10px; font-size: 16px; margin: 5px; }
+        textarea { width: 80%; height: 400px; margin-top: 20px; padding: 10px; font-size: 16px; border: 1px solid #ddd; border-radius: 5px; resize: vertical; }
+    </style>
+</head>
+<body>
+    <h1>Parle-moi !</h1>
+    <button id="start-btn">Démarrer le micro</button>
+    <button id="stop-btn" disabled>Arrêter le micro</button>
+    <button id="speak-btn">Écouter la réponse</button>
+    <select id="voice-select">
+        <option value="DGTOOUoGpoP6UZ9uSWfA">Homme (Adam)</option>
+        <option value="LPsbEdCpBjNTSJwvdME7">Femme (Rachel)</option>
+    </select>
+    <br>
+    <textarea id="output" placeholder="Ton texte apparaîtra ici..."></textarea>
+
+    <script>
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'fr-FR';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const speakBtn = document.getElementById('speak-btn');
+        const voiceSelect = document.getElementById('voice-select');
+        const output = document.getElementById('output');
+
+        let silenceTimer;
+        let isWaiting = false;
+        let lastSpeechTime = Date.now();
+        let currentText = '';
+        let isSpeaking = false;
+
+        startBtn.addEventListener('click', () => {
+            recognition.start();
+            startBtn.textContent = 'Micro activé (parle !)';
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+        });
+
+        stopBtn.addEventListener('click', () => {
+            recognition.stop();
+            startBtn.textContent = 'Démarrer le micro';
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        });
+
+        recognition.onresult = (event) => {
+            const result = event.results[event.results.length - 1];
+            let texte = result[0].transcript;
+            texte = texte.replace(/virgule/gi, ',')
+                         .replace(/point(?!\s*(d'|de\s)?[interrogation|exclamation])/gi, '.')
+                         .replace(/point\s*d'interrogation/gi, '?')
+                         .replace(/point\s*interrogation/gi, '?')
+                         .replace(/interrogation/gi, '?')
+                         .replace(/point\s*d'exclamation/gi, '!')
+                         .replace(/point\s*exclamation/gi, '!')
+                         .replace(/exclamation/gi, '!')
+                         .replace(/deux\s*points/gi, ':')
+                         .replace(/point-virgule/gi, ';')
+                         .replace(/parenthèse\s*ouvrante/gi, '(')
+                         .replace(/parenthèse\s*fermante/gi, ')')
+                         .replace(/guillemets/gi, '"')
+                         .replace(/tiret/gi, '-')
+                         .replace(/trois\s*petits\s*points/gi, '…')
+                         .replace(/trois\s*points/gi, '…')
+                         .replace(/3\s*\.s/gi, '…')
+                         .replace(/trois\s*\.s/gi, '…')
+                         .replace(/deux\s*\.s/gi, '…')
+                         .replace(/points\s*de\s*suspension/gi, '…')
+                         .replace(/suspension/gi, '…')
+                         .replace(/point\s*de\s*suspension/gi, '…')
+                         .replace(/de\s*suspension/gi, '…');
+
+            const displayText = texte.replace(/bref\s*toi/gi, '').replace(/attends\s*attends/gi, '').trim();
+
+            if (result.isFinal && !isSpeaking) {
+                currentText = displayText;
+                output.value += (output.value ? ' ' : '') + currentText;
+
+                if (texte.toLowerCase().includes("attends attends")) {
+                    isWaiting = true;
+                    setTimeout(() => { isWaiting = false; }, 5000);
+                    return;
+                }
+
+                lastSpeechTime = Date.now();
+                clearTimeout(silenceTimer);
+
+                silenceTimer = setTimeout(() => {
+                    if (!isWaiting) {
+                        handleSpeechResponse(texte);
+                    }
+                }, 2000);
+            }
+        };
+
+        async function speakWithElevenLabs(text, voiceId, stability = 0.5, similarity = 0.75) {
+            const apiKey = 'sk_d5c8b7db9f8c0c2d5c3f3a626a5fa8ff06217a198109942b';
+            const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'xi-api-key': apiKey
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        model_id: 'eleven_multilingual_v2',
+                        voice_settings: {
+                            stability: stability,
+                            similarity_boost: similarity
+                        }
+                    })
+                });
+
+                if (!response.ok) throw new Error('Erreur ElevenLabs');
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+                audio.play();
+                return audio;
+            } catch (error) {
+                console.log("Erreur ElevenLabs : ", error);
+                output.value += "\nOups, je n’ai pas pu parler !";
+            }
+        }
+
+        async function getGrokResponse(userInput) {
+            const input = userInput.toLowerCase();
+            if (input.includes("comment vas-tu")) {
+                return "Je vais super bien, merci ! Et toi ?";
+            } else if (input.includes("projet")) {
+                return "Notre projet avance bien, non ? Qu’est-ce qu’on fait ensuite ?";
+            } else if (input.includes("ce weekend") || input.includes("ce week-end")) {
+                return "Ce weekend, je vais chiller et peut-être coder un petit jeu avec des robots. Et toi, t’as des plans ?";
+            } else if (input.includes("tu codes quoi") || input.includes("tu connais quoi")) {
+                return "Je bosse souvent en JavaScript, là je pense à un jeu avec des robots. Toi, t’aimes coder ou tu fais autre chose ?";
+            } else if (input.includes("tu fais quoi")) {
+                return "Là, je discute avec toi, et ce weekend je vais coder un peu. Et toi, quoi de prévu ?";
+            } else {
+                return "Coucou ! J’aime bien papoter avec toi. Quoi de neuf de ton côté ?";
+            }
+        }
+
+        async function handleSpeechResponse(userInput) {
+            isSpeaking = true;
+            const selectedVoice = voiceSelect.value;
+            const reponse = await getGrokResponse(userInput);
+            output.value += '\n' + reponse;
+
+            let stability = 0.5;
+            let similarity = 0.75;
+            if (reponse.includes('!') || reponse.includes('?')) {
+                stability = 0.4;
+                similarity = 0.85;
+            }
+
+            const mainAudio = await speakWithElevenLabs(reponse, selectedVoice, stability, similarity);
+            if (mainAudio) {
+                mainAudio.onended = () => {
+                    isSpeaking = false;
+                    recognition.start(); // Relance le micro sans clic
+                    startBtn.textContent = 'Micro activé (parle !)';
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                };
+            }
+            recognition.stop(); // Stoppe temporairement pour éviter la boucle
+        }
+
+        speakBtn.addEventListener('click', async () => {
+            const userInput = output.value.trim() || "Salut, quoi de neuf ?";
+            await handleSpeechResponse(userInput);
+        });
+
+        recognition.onend = () => {
+            startBtn.textContent = 'Démarrer le micro';
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        };
+
+        recognition.onerror = (event) => {
+            output.value += "\nErreur : " + event.error;
+            startBtn.textContent = 'Démarrer le micro';
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        };
+    </script>
+</body>
+</html>
