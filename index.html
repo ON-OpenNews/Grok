@@ -87,7 +87,7 @@
 
             if (result.isFinal && !isSpeaking && displayText !== lastResponse) {
                 currentText = displayText;
-                output.value += (output.value ? ' ' : '') + currentText;
+                output.value += (output.value ? '\n' : '') + currentText; // Saut de ligne avant chaque entrée
 
                 if (texte.toLowerCase().includes("attends attends")) {
                     isWaiting = true;
@@ -143,6 +143,8 @@
             const input = userInput.toLowerCase();
             if (input.includes("après ton jeu")) {
                 return "Après mon jeu, je vais sans doute tester quelques bières et me poser. Et toi, après ton weekend, t’as quoi de prévu ?";
+            } else if (input.includes("tu aimes coder longtemps")) {
+                return "Coder longtemps, ça dépend ! Si je suis dans le flow, je peux y passer des heures, sinon je coupe avec une bière. Et toi, t’aimes les longues sessions ou tu préfères chiller ?";
             } else if (input.includes("comment vas-tu")) {
                 return "Je vais super bien, merci ! Et toi ?";
             } else if (input.includes("projet")) {
@@ -168,7 +170,7 @@
             const selectedVoice = voiceSelect.value;
             const reponse = await getGrokResponse(userInput);
             lastResponse = reponse;
-            output.value += '\n' + reponse;
+            output.value += '\n' + reponse; // Saut de ligne avant la réponse
 
             let stability = 0.5;
             let similarity = 0.75;
