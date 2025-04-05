@@ -15,7 +15,7 @@
     <h1>Parle-moi !</h1>
     <button id="start-btn">Démarrer le micro</button>
     <button id="stop-btn" disabled>Arrêter le micro</button>
-    <button id="speak-btn">Écouter la réponse</button>
+    <button id="speak-btn">Afficher la réponse</button>
     <select id="voice-select">
         <option value="DGTOOUoGpoP6UZ9uSWfA">Homme (Adam)</option>
         <option value="LPsbEdCpBjNTSJwvdME7">Femme (Rachel)</option>
@@ -122,10 +122,9 @@
             }
         };
 
-        // Désactivé temporairement à cause du quota
         async function speakWithElevenLabs(text, voiceId, stability = 0.5, similarity = 0.75) {
-            console.log("Voix désactivée (quota dépassé), texte seul : ", text);
-            return null; // Simule un échec pour tester sans ElevenLabs
+            console.log("Voix désactivée (quota dépassé), réponse en texte : ", text);
+            return null; // Pas de voix, juste texte
         }
 
         async function getGrokResponse(userInput) {
