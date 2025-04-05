@@ -122,9 +122,30 @@
             }
         };
 
-        async function speakWithElevenLabs(text, voiceId, stability = 0.5, similarity = 0.75) {
-            console.log("Voix désactivée (quota dépassé), réponse en texte : ", text);
-            return null; // Pas de voix, juste texte
+        // Plus de ElevenLabs, juste du texte
+        async function handleSpeechResponse(userInput) {
+            isSpeaking = true;
+            if (recognitionActive) {
+                recognition.stop();
+                recognitionActive = false;
+            }
+            const reponse = await getGrokResponse(userInput);
+            lastResponse = reponse;
+            output.value += '\n' + reponse;
+            console.log("Réponse affichée : ", reponse);
+
+            isSpeaking = false;
+            if (!recognitionActive) {
+                try {
+                    recognition.start();
+                    recognitionActive = true;
+                    startBtn.textContent = 'Micro activé (parle !)';
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                } catch (error) {
+                    console.log("Erreur au redémarrage : ", error);
+                }
+            }
         }
 
         async function getGrokResponse(userInput) {
@@ -162,39 +183,6 @@
             } else {
                 console.log("Retour générique");
                 return "Coucou ! J’aime bien papoter avec toi. Quoi de neuf de ton côté ?";
-            }
-        }
-
-        async function handleSpeechResponse(userInput) {
-            isSpeaking = true;
-            if (recognitionActive) {
-                recognition.stop();
-                recognitionActive = false;
-            }
-            const selectedVoice = voiceSelect.value;
-            const reponse = await getGrokResponse(userInput);
-            lastResponse = reponse;
-            output.value += '\n' + reponse;
-
-            let stability = 0.5;
-            let similarity = 0.75;
-            if (reponse.includes('!') || reponse.includes('?')) {
-                stability = 0.4;
-                similarity = 0.85;
-            }
-
-            const mainAudio = await speakWithElevenLabs(reponse, selectedVoice, stability, similarity);
-            isSpeaking = false;
-            if (!recognitionActive) {
-                try {
-                    recognition.start();
-                    recognitionActive = true;
-                    startBtn.textContent = 'Micro activé (parle !)';
-                    startBtn.disabled = true;
-                    stopBtn.disabled = false;
-                } catch (error) {
-                    console.log("Erreur au redémarrage : ", error);
-                }
             }
         }
 
