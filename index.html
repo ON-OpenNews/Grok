@@ -41,19 +41,31 @@
         let currentText = '';
         let isSpeaking = false;
         let lastResponse = '';
-        let recognitionActive = false; // Suivi de l'état
+        let recognitionActive = false;
 
         startBtn.addEventListener('click', () => {
-            recognition.start();
-            recognitionActive = true;
-            startBtn.textContent = 'Micro activé (parle !)';
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
+            console.log("Clic sur Démarrer le micro"); // Debug
+            if (!recognitionActive) {
+                try {
+                    recognition.start();
+                    recognitionActive = true;
+                    startBtn.textContent = 'Micro activé (parle !)';
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                } catch (error) {
+                    console.log("Erreur au démarrage : ", error);
+                }
+            } else {
+                console.log("Reco déjà active");
+            }
         });
 
         stopBtn.addEventListener('click', () => {
-            recognition.stop();
-            recognitionActive = false;
+            console.log("Clic sur Arrêter le micro"); // Debug
+            if (recognitionActive) {
+                recognition.stop();
+                recognitionActive = false;
+            }
             startBtn.textContent = 'Démarrer le micro';
             startBtn.disabled = false;
             stopBtn.disabled = true;
@@ -157,7 +169,7 @@
                 return "Je vais super bien, merci ! Et toi ?";
             } else if (input.includes("projet")) {
                 console.log("Match projet");
-                return shorthand: "Notre projet avance bien, non ? Qu’est-ce qu’on fait ensuite ?";
+                return "Notre projet avance bien, non ? Qu’est-ce qu’on fait ensuite ?";
             } else if (input.includes("ce weekend") || input.includes("ce week-end")) {
                 console.log("Match ce weekend");
                 return "Ce weekend, je vais chiller et peut-être coder un petit jeu avec des robots. Et toi, t’as des plans ?";
@@ -181,8 +193,10 @@
 
         async function handleSpeechResponse(userInput) {
             isSpeaking = true;
-            recognition.stop();
-            recognitionActive = false;
+            if (recognitionActive) {
+                recognition.stop();
+                recognitionActive = false;
+            }
             const selectedVoice = voiceSelect.value;
             const reponse = await getGrokResponse(userInput);
             lastResponse = reponse;
@@ -200,11 +214,15 @@
                 mainAudio.onended = () => {
                     isSpeaking = false;
                     if (!recognitionActive) {
-                        recognition.start();
-                        recognitionActive = true;
-                        startBtn.textContent = 'Micro activé (parle !)';
-                        startBtn.disabled = true;
-                        stopBtn.disabled = false;
+                        try {
+                            recognition.start();
+                            recognitionActive = true;
+                            startBtn.textContent = 'Micro activé (parle !)';
+                            startBtn.disabled = true;
+                            stopBtn.disabled = false;
+                        } catch (error) {
+                            console.log("Erreur au redémarrage : ", error);
+                        }
                     }
                 };
             }
@@ -220,14 +238,19 @@
             startBtn.textContent = 'Démarrer le micro';
             startBtn.disabled = false;
             stopBtn.disabled = true;
+            console.log("Reco terminée");
         };
 
         recognition.onerror = (event) => {
             console.log("Erreur reco : ", event.error);
             if (event.error === 'no-speech') {
                 if (!recognitionActive) {
-                    recognition.start();
-                    recognitionActive = true;
+                    try {
+                        recognition.start();
+                        recognitionActive = true;
+                    } catch (error) {
+                        console.log("Erreur au redémarrage no-speech : ", error);
+                    }
                 }
             } else {
                 output.value += "\nErreur : " + event.error;
