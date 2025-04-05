@@ -153,6 +153,8 @@
                 return "Là, je papote avec toi, et ce weekend je vais coder un peu. Et toi, quoi de prévu ?";
             } else if (input.includes("super ia") || input.includes("intelligente") || input.includes("sympa")) {
                 return "Haha, merci pour le compliment ! Je fais de mon mieux pour être chaleureuse et utile. Toi, tu testes quoi en ce moment ?";
+            } else if (input.includes("bière") || input.includes("tu aimes quoi comme")) {
+                return "Une bonne IPA, c’est top ! Moi, j’aime bien une petite stout bien crémeuse, ou une IPA aussi selon l’humeur. T’as une préférée, toi ?";
             } else {
                 return "Coucou ! J’aime bien papoter avec toi. Quoi de neuf de ton côté ?";
             }
@@ -198,8 +200,7 @@
 
         recognition.onerror = (event) => {
             if (event.error === 'no-speech') {
-                // Ignore silencieusement no-speech
-                recognition.start(); // Relance le micro
+                recognition.start();
             } else {
                 output.value += "\nErreur : " + event.error;
                 startBtn.textContent = 'Démarrer le micro';
