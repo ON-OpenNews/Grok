@@ -122,41 +122,10 @@
             }
         };
 
+        // Désactivé temporairement à cause du quota
         async function speakWithElevenLabs(text, voiceId, stability = 0.5, similarity = 0.75) {
-            const apiKey = 'sk_d5c8b7db9f8c0c2d5c3f3a626a5fa8ff06217a198109942b';
-            const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
-
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'xi-api-key': apiKey
-                    },
-                    body: JSON.stringify({
-                        text: text,
-                        model_id: 'eleven_multilingual_v2',
-                        voice_settings: {
-                            stability: stability,
-                            similarity_boost: similarity
-                        }
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Erreur ElevenLabs : ${response.status} - ${errorText}`);
-                }
-                const audioBlob = await response.blob();
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioUrl);
-                audio.play();
-                return audio;
-            } catch (error) {
-                console.log("Erreur ElevenLabs : ", error);
-                output.value += "\nOups, je n’ai pas pu parler ! (" + error.message + ")";
-                return null; // Retourne null pour gérer l'échec
-            }
+            console.log("Voix désactivée (quota dépassé), texte seul : ", text);
+            return null; // Simule un échec pour tester sans ElevenLabs
         }
 
         async function getGrokResponse(userInput) {
@@ -217,32 +186,15 @@
 
             const mainAudio = await speakWithElevenLabs(reponse, selectedVoice, stability, similarity);
             isSpeaking = false;
-            if (mainAudio) {
-                mainAudio.onended = () => {
-                    if (!recognitionActive) {
-                        try {
-                            recognition.start();
-                            recognitionActive = true;
-                            startBtn.textContent = 'Micro activé (parle !)';
-                            startBtn.disabled = true;
-                            stopBtn.disabled = false;
-                        } catch (error) {
-                            console.log("Erreur au redémarrage : ", error);
-                        }
-                    }
-                };
-            } else {
-                // Si ElevenLabs échoue, on relance quand même la reco
-                if (!recognitionActive) {
-                    try {
-                        recognition.start();
-                        recognitionActive = true;
-                        startBtn.textContent = 'Micro activé (parle !)';
-                        startBtn.disabled = true;
-                        stopBtn.disabled = false;
-                    } catch (error) {
-                        console.log("Erreur au redémarrage après échec ElevenLabs : ", error);
-                    }
+            if (!recognitionActive) {
+                try {
+                    recognition.start();
+                    recognitionActive = true;
+                    startBtn.textContent = 'Micro activé (parle !)';
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                } catch (error) {
+                    console.log("Erreur au redémarrage : ", error);
                 }
             }
         }
