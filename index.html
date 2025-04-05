@@ -143,7 +143,10 @@
                     })
                 });
 
-                if (!response.ok) throw new Error('Erreur ElevenLabs');
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erreur ElevenLabs : ${response.status} - ${errorText}`);
+                }
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
                 const audio = new Audio(audioUrl);
@@ -151,7 +154,8 @@
                 return audio;
             } catch (error) {
                 console.log("Erreur ElevenLabs : ", error);
-                output.value += "\nOups, je n’ai pas pu parler !";
+                output.value += "\nOups, je n’ai pas pu parler ! (" + error.message + ")";
+                return null; // Retourne null pour gérer l'échec
             }
         }
 
@@ -212,9 +216,9 @@
             }
 
             const mainAudio = await speakWithElevenLabs(reponse, selectedVoice, stability, similarity);
+            isSpeaking = false;
             if (mainAudio) {
                 mainAudio.onended = () => {
-                    isSpeaking = false;
                     if (!recognitionActive) {
                         try {
                             recognition.start();
@@ -227,6 +231,19 @@
                         }
                     }
                 };
+            } else {
+                // Si ElevenLabs échoue, on relance quand même la reco
+                if (!recognitionActive) {
+                    try {
+                        recognition.start();
+                        recognitionActive = true;
+                        startBtn.textContent = 'Micro activé (parle !)';
+                        startBtn.disabled = true;
+                        stopBtn.disabled = false;
+                    } catch (error) {
+                        console.log("Erreur au redémarrage après échec ElevenLabs : ", error);
+                    }
+                }
             }
         }
 
