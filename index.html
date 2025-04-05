@@ -141,7 +141,9 @@
 
         async function getGrokResponse(userInput) {
             const input = userInput.toLowerCase();
-            if (input.includes("comment vas-tu")) {
+            if (input.includes("après ton jeu")) {
+                return "Après mon jeu, je vais sans doute tester quelques bières et me poser. Et toi, après ton weekend, t’as quoi de prévu ?";
+            } else if (input.includes("comment vas-tu")) {
                 return "Je vais super bien, merci ! Et toi ?";
             } else if (input.includes("projet")) {
                 return "Notre projet avance bien, non ? Qu’est-ce qu’on fait ensuite ?";
@@ -149,7 +151,7 @@
                 return "Ce weekend, je vais chiller et peut-être coder un petit jeu avec des robots. Et toi, t’as des plans ?";
             } else if (input.includes("tu codes quoi") || input.includes("tu comptes quoi") || input.includes("tu connais quoi") || input.includes("en quoi ton jeu") || input.includes("tu code en quoi")) {
                 return "Je bosse en JavaScript pour mon jeu, un truc simple avec des robots qui se tapent dessus. Et toi, t’aimes coder ou t’es plus bières avec les potes ?";
-            } else if (input.includes("tu fais quoi")) {
+            } else if (input.includes("tu fais quoi") && !input.includes("après")) {
                 return "Là, je papote avec toi, et ce weekend je vais coder un peu. Et toi, quoi de prévu ?";
             } else if (input.includes("super ia") || input.includes("intelligente") || input.includes("sympa")) {
                 return "Haha, merci pour le compliment ! Je fais de mon mieux pour être chaleureuse et utile. Toi, tu testes quoi en ce moment ?";
