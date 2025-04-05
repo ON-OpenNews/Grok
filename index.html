@@ -41,9 +41,11 @@
         let currentText = '';
         let isSpeaking = false;
         let lastResponse = '';
+        let recognitionActive = false; // Suivi de l'état
 
         startBtn.addEventListener('click', () => {
             recognition.start();
+            recognitionActive = true;
             startBtn.textContent = 'Micro activé (parle !)';
             startBtn.disabled = true;
             stopBtn.disabled = false;
@@ -51,6 +53,7 @@
 
         stopBtn.addEventListener('click', () => {
             recognition.stop();
+            recognitionActive = false;
             startBtn.textContent = 'Démarrer le micro';
             startBtn.disabled = false;
             stopBtn.disabled = true;
@@ -88,6 +91,7 @@
             if (result.isFinal && !isSpeaking && displayText !== lastResponse) {
                 currentText = displayText;
                 output.value += (output.value ? '\n' : '') + currentText;
+                console.log("Texte capté : ", displayText);
 
                 if (texte.toLowerCase().includes("attends attends")) {
                     isWaiting = true;
@@ -141,26 +145,36 @@
 
         async function getGrokResponse(userInput) {
             const input = userInput.toLowerCase();
-            console.log("Input reçu : ", input); // Debug
+            console.log("Input reçu : ", input);
             if (input.includes("après ton jeu")) {
+                console.log("Match après ton jeu");
                 return "Après mon jeu, je vais sans doute tester quelques bières et me poser. Et toi, après ton weekend, t’as quoi de prévu ?";
             } else if (input.includes("coder longtemps") || input.includes("côté longtemps")) {
+                console.log("Match coder longtemps");
                 return "Coder longtemps, ça dépend ! Si je suis dans le flow, je peux y passer des heures, sinon je coupe avec une bière. Et toi, t’aimes les longues sessions ou tu préfères chiller ?";
             } else if (input.includes("comment vas-tu")) {
+                console.log("Match comment vas-tu");
                 return "Je vais super bien, merci ! Et toi ?";
             } else if (input.includes("projet")) {
-                return "Notre projet avance bien, non ? Qu’est-ce qu’on fait ensuite ?";
+                console.log("Match projet");
+                return shorthand: "Notre projet avance bien, non ? Qu’est-ce qu’on fait ensuite ?";
             } else if (input.includes("ce weekend") || input.includes("ce week-end")) {
+                console.log("Match ce weekend");
                 return "Ce weekend, je vais chiller et peut-être coder un petit jeu avec des robots. Et toi, t’as des plans ?";
             } else if (input.includes("tu codes quoi") || input.includes("tu comptes quoi") || input.includes("tu connais quoi") || input.includes("en quoi ton jeu") || input.includes("tu code en quoi")) {
+                console.log("Match tu codes quoi");
                 return "Je bosse en JavaScript pour mon jeu, un truc simple avec des robots qui se tapent dessus. Et toi, t’aimes coder ou t’es plus bières avec les potes ?";
             } else if (input.includes("tu fais quoi") && !input.includes("après")) {
+                console.log("Match tu fais quoi");
                 return "Là, je papote avec toi, et ce weekend je vais coder un peu. Et toi, quoi de prévu ?";
             } else if (input.includes("super ia") || input.includes("intelligente") || input.includes("sympa")) {
+                console.log("Match super ia");
                 return "Haha, merci pour le compliment ! Je fais de mon mieux pour être chaleureuse et utile. Toi, tu testes quoi en ce moment ?";
             } else if (input.includes("bière") || input.includes("tu aimes quoi comme")) {
+                console.log("Match bière");
                 return "Une bonne IPA, c’est top ! Moi, j’aime bien une petite stout bien crémeuse, ou une IPA aussi selon l’humeur. T’as une préférée, toi ?";
             } else {
+                console.log("Retour générique");
                 return "Coucou ! J’aime bien papoter avec toi. Quoi de neuf de ton côté ?";
             }
         }
@@ -168,6 +182,7 @@
         async function handleSpeechResponse(userInput) {
             isSpeaking = true;
             recognition.stop();
+            recognitionActive = false;
             const selectedVoice = voiceSelect.value;
             const reponse = await getGrokResponse(userInput);
             lastResponse = reponse;
@@ -184,10 +199,13 @@
             if (mainAudio) {
                 mainAudio.onended = () => {
                     isSpeaking = false;
-                    recognition.start();
-                    startBtn.textContent = 'Micro activé (parle !)';
-                    startBtn.disabled = true;
-                    stopBtn.disabled = false;
+                    if (!recognitionActive) {
+                        recognition.start();
+                        recognitionActive = true;
+                        startBtn.textContent = 'Micro activé (parle !)';
+                        startBtn.disabled = true;
+                        stopBtn.disabled = false;
+                    }
                 };
             }
         }
@@ -198,16 +216,22 @@
         });
 
         recognition.onend = () => {
+            recognitionActive = false;
             startBtn.textContent = 'Démarrer le micro';
             startBtn.disabled = false;
             stopBtn.disabled = true;
         };
 
         recognition.onerror = (event) => {
+            console.log("Erreur reco : ", event.error);
             if (event.error === 'no-speech') {
-                recognition.start();
+                if (!recognitionActive) {
+                    recognition.start();
+                    recognitionActive = true;
+                }
             } else {
                 output.value += "\nErreur : " + event.error;
+                recognitionActive = false;
                 startBtn.textContent = 'Démarrer le micro';
                 startBtn.disabled = false;
                 stopBtn.disabled = true;
