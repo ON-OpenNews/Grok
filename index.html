@@ -44,7 +44,7 @@
         let recognitionActive = false;
 
         startBtn.addEventListener('click', () => {
-            console.log("Clic sur Démarrer le micro"); // Debug
+            console.log("Clic sur Démarrer le micro");
             if (!recognitionActive) {
                 try {
                     recognition.start();
@@ -61,7 +61,7 @@
         });
 
         stopBtn.addEventListener('click', () => {
-            console.log("Clic sur Arrêter le micro"); // Debug
+            console.log("Clic sur Arrêter le micro");
             if (recognitionActive) {
                 recognition.stop();
                 recognitionActive = false;
