@@ -127,25 +127,13 @@
             if (recognitionActive) {
                 recognition.stop();
                 recognitionActive = false;
-                await new Promise(resolve => recognition.onend = resolve); // Attendre que la reco soit vraiment arrêtée
             }
             const reponse = await getGrokResponse(userInput);
             lastResponse = reponse;
             output.value += '\n' + reponse;
             console.log("Réponse affichée : ", reponse);
-
             isSpeaking = false;
-            if (!recognitionActive) {
-                try {
-                    recognition.start();
-                    recognitionActive = true;
-                    startBtn.textContent = 'Micro activé (parle !)';
-                    startBtn.disabled = true;
-                    stopBtn.disabled = false;
-                } catch (error) {
-                    console.log("Erreur au redémarrage : ", error);
-                }
-            }
+            // Pas de redémarrage auto, on laisse manuel
         }
 
         async function getGrokResponse(userInput) {
@@ -180,6 +168,12 @@
             } else if (input.includes("bière") || input.includes("tu aimes quoi comme")) {
                 console.log("Match bière");
                 return "Une bonne IPA, c’est top ! Moi, j’aime bien une petite stout bien crémeuse, ou une IPA aussi selon l’humeur. T’as une préférée, toi ?";
+            } else if (input.includes("je préfère chiller")) {
+                console.log("Match je préfère chiller");
+                return "Chiller, c’est la vie ! Moi aussi, parfois, je lâche le code pour une bière et un film. T’as un spot préféré pour te poser ?";
+            } else if (input.includes("t’aimes quoi faire")) {
+                console.log("Match t’aimes quoi faire");
+                return "J’aime coder des trucs fun, causer avec des gens cool comme toi, et siroter une bière de temps en temps. Et toi, t’aimes quoi faire pour décompresser ?";
             } else {
                 console.log("Retour générique");
                 return "Coucou ! J’aime bien papoter avec toi. Quoi de neuf de ton côté ?";
@@ -193,18 +187,10 @@
 
         recognition.onend = () => {
             recognitionActive = false;
+            startBtn.textContent = 'Démarrer le micro';
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
             console.log("Reco terminée");
-            if (!isSpeaking && !startBtn.disabled) {
-                try {
-                    recognition.start();
-                    recognitionActive = true;
-                    startBtn.textContent = 'Micro activé (parle !)';
-                    startBtn.disabled = true;
-                    stopBtn.disabled = false;
-                } catch (error) {
-                    console.log("Erreur au redémarrage onend : ", error);
-                }
-            }
         };
 
         recognition.onerror = (event) => {
