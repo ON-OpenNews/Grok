@@ -141,6 +141,7 @@
 
         async function getGrokResponse(userInput) {
             const input = userInput.toLowerCase();
+            console.log("Input reçu : ", input); // Debug
             if (input.includes("après ton jeu")) {
                 return "Après mon jeu, je vais sans doute tester quelques bières et me poser. Et toi, après ton weekend, t’as quoi de prévu ?";
             } else if (input.includes("coder longtemps") || input.includes("côté longtemps")) {
