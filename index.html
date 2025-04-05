@@ -147,7 +147,7 @@
                 return "Notre projet avance bien, non ? Qu’est-ce qu’on fait ensuite ?";
             } else if (input.includes("ce weekend") || input.includes("ce week-end")) {
                 return "Ce weekend, je vais chiller et peut-être coder un petit jeu avec des robots. Et toi, t’as des plans ?";
-            } else if (input.includes("tu codes quoi") || input.includes("tu comptes quoi") || input.includes("tu connais quoi") || input.includes("en quoi ton jeu")) {
+            } else if (input.includes("tu codes quoi") || input.includes("tu comptes quoi") || input.includes("tu connais quoi") || input.includes("en quoi ton jeu") || input.includes("tu code en quoi")) {
                 return "Je bosse en JavaScript pour mon jeu, un truc simple avec des robots qui se tapent dessus. Et toi, t’aimes coder ou t’es plus bières avec les potes ?";
             } else if (input.includes("tu fais quoi")) {
                 return "Là, je papote avec toi, et ce weekend je vais coder un peu. Et toi, quoi de prévu ?";
@@ -197,8 +197,11 @@
         };
 
         recognition.onerror = (event) => {
-            output.value += "\nErreur : " + event.error;
-            if (event.error !== 'no-speech') { // Ignore no-speech pour éviter le spam
+            if (event.error === 'no-speech') {
+                // Ignore silencieusement no-speech
+                recognition.start(); // Relance le micro
+            } else {
+                output.value += "\nErreur : " + event.error;
                 startBtn.textContent = 'Démarrer le micro';
                 startBtn.disabled = false;
                 stopBtn.disabled = true;
