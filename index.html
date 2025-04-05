@@ -127,6 +127,7 @@
             if (recognitionActive) {
                 recognition.stop();
                 recognitionActive = false;
+                await new Promise(resolve => recognition.onend = resolve); // Attendre que la reco soit vraiment arrêtée
             }
             const reponse = await getGrokResponse(userInput);
             lastResponse = reponse;
@@ -192,10 +193,18 @@
 
         recognition.onend = () => {
             recognitionActive = false;
-            startBtn.textContent = 'Démarrer le micro';
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
             console.log("Reco terminée");
+            if (!isSpeaking && !startBtn.disabled) {
+                try {
+                    recognition.start();
+                    recognitionActive = true;
+                    startBtn.textContent = 'Micro activé (parle !)';
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                } catch (error) {
+                    console.log("Erreur au redémarrage onend : ", error);
+                }
+            }
         };
 
         recognition.onerror = (event) => {
