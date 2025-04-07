@@ -44,9 +44,8 @@
         let lastResponse = '';
         let recognitionActive = false;
 
-        // Clés API intégrées
-        const XAI_API_KEY = 'xai-YClC2sjxeGgsiOORtTWBaJakDX09lvv3MUq1sYGA4uOSDEWqfHbe3XKbWCU2XnMmIbe9NTrOrZhnUkzl';
-        const ELEVENLABS_API_KEY = 'sk_9fd8d60e396f354f9cc3b46b28cf28aeb42cc981d9df6e11';
+        const XAI_API_KEY = 'xai-izNzpz292S3fiC0zzJ3vfSvpsXvVjFq2kr7Z5lRDikTn7cpyIIjrMtaVNtmYWcposxNE2PszIjAXtqDx';
+        const ELEVENLABS_API_KEY = 'sk_4850bd54128030f278eb8bb8304079b919c6b681194e5e90';
 
         startBtn.addEventListener('click', () => {
             console.log("Clic sur Démarrer le micro");
@@ -77,7 +76,7 @@
         recognition.onresult = (event) => {
             const result = event.results[event.results.length - 1];
             let texte = result[0].transcript;
-            texte = texte.replace(/virgule/gi, ',').replace(/point/gi, '.').replace(/question/gi, '?');
+            texte = texte.replace(/virgule/gi, ',').replace(/point/gi, '.').replace(/question/gi, '?').replace(/interrogation/gi, '?');
 
             const displayText = texte.trim();
 
@@ -117,7 +116,6 @@
             isSpeaking = false;
         }
 
-        // Appel API xAI
         async function getGrokResponse(userInput) {
             const input = userInput.trim();
             console.log("Input reçu : ", input);
@@ -129,23 +127,24 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: 'grok-beta',
+                        model: 'grok-2-latest',
                         messages: [
                             { role: 'system', content: 'Tu es Grok, un collègue fun et utile qui bosse avec moi sur des projets.' },
                             { role: 'user', content: input }
                         ],
-                        temperature: 0.7
+                        temperature: 0.7,
+                        stream: false
                     })
                 });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 return data.choices[0].message.content;
             } catch (error) {
                 console.log("Erreur API xAI : ", error);
-                return "Oups, souci avec l’API xAI. On vérifie ça ?";
+                return "Oups, souci avec l’API xAI. Vérifie ton solde sur console.x.ai !";
             }
         }
 
-        // Lecture avec ElevenLabs ou Paul
         async function speakText(text) {
             const selectedVoice = voiceSelect.value;
             if (selectedVoice === 'Paul') {
@@ -169,15 +168,12 @@
                             voice_settings: { stability: 0.5, similarity_boost: 0.75 }
                         })
                     });
-                    if (response.ok) {
-                        const audioBlob = await response.blob();
-                        const audioUrl = URL.createObjectURL(audioBlob);
-                        const audio = new Audio(audioUrl);
-                        audio.play();
-                        console.log("Lecture ElevenLabs OK avec voix : ", selectedVoice);
-                    } else {
-                        throw new Error("ElevenLabs KO");
-                    }
+                    if (!response.ok) throw new Error("ElevenLabs KO");
+                    const audioBlob = await response.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                    console.log("Lecture ElevenLabs OK avec voix : ", selectedVoice);
                 } catch (error) {
                     console.log("Erreur ElevenLabs, passage à Paul : ", error);
                     const utterance = new SpeechSynthesisUtterance(text);
@@ -189,7 +185,6 @@
             }
         }
 
-        // Bouton "Lire tout le texte"
         readAllBtn.addEventListener('click', () => {
             const fullText = output.value.trim();
             if (fullText) {
